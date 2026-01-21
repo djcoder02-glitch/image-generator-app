@@ -1,4 +1,4 @@
-﻿import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 
 interface ImageEditorProps {
   image: any;
@@ -82,14 +82,9 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ image, onSave, onClose }) => 
       const ctx = canvas?.getContext('2d');
       if (!canvas || !ctx) return;
 
-      let timestamp: string;
-      
-      if (timestampMode === 'auto') {
-        timestamp = image.exifDate || new Date().toLocaleString();
-      } else {
-        // Manual mode - use custom input or current date/time
-        timestamp = manualTimestamp || new Date().toLocaleString();
-      }
+      const timestamp = timestampMode === 'auto' 
+        ? (image.exifDate || new Date().toLocaleString())
+        : (manualTimestamp || new Date().toLocaleString());
       
       ctx.font = `${fontSize}px Arial`;
       ctx.fillStyle = '#ffffff';
@@ -114,10 +109,8 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ image, onSave, onClose }) => 
     const currentPos = getMousePos(e);
     
     ctx.putImageData(originalImageData, 0, 0);
-    
     ctx.strokeStyle = color;
     ctx.lineWidth = lineWidth;
-    ctx.fillStyle = color;
 
     if (tool === 'circle') {
       const radius = Math.sqrt(
@@ -130,7 +123,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ image, onSave, onClose }) => 
     } else if (tool === 'arrow') {
       drawArrow(ctx, startPos.x, startPos.y, currentPos.x, currentPos.y);
     } else if (tool === 'crop') {
-      ctx.strokeStyle = '#ffff00';
+      ctx.strokeStyle = '#0066cc';
       ctx.setLineDash([5, 5]);
       ctx.strokeRect(
         startPos.x,
@@ -153,7 +146,6 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ image, onSave, onClose }) => 
     
     ctx.strokeStyle = color;
     ctx.lineWidth = lineWidth;
-    ctx.fillStyle = color;
 
     if (tool === 'circle') {
       const radius = Math.sqrt(
@@ -273,9 +265,7 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ image, onSave, onClose }) => 
     }
   };
 
-  const handleClearAll = () => {
-    handleResetToOriginal();
-  };
+  const colors = ['#ff0000', '#0000ff', '#00ff00', '#ffff00', '#ff00ff', '#00ffff', '#ffffff', '#000000'];
 
   return (
     <div style={{
@@ -284,225 +274,220 @@ const ImageEditor: React.FC<ImageEditorProps> = ({ image, onSave, onClose }) => 
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(0, 0, 0, 0.95)',
+      background: 'rgba(0, 0, 0, 0.9)',
       zIndex: 1000,
-      display: 'flex'
+      display: 'flex',
+      flexDirection: 'column'
     }}>
-      {/* Canvas Area */}
+      {/* Top Toolbar */}
       <div style={{
-        flex: 1,
+        background: 'white',
+        padding: '12px 20px',
+        borderBottom: '1px solid #ddd',
         display: 'flex',
-        flexDirection: 'column',
-        padding: '20px',
-        overflow: 'auto'
+        justifyContent: 'space-between',
+        alignItems: 'center'
       }}>
-        <canvas
-          ref={canvasRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          style={{
-            maxWidth: '100%',
-            maxHeight: '100%',
-            border: '2px solid #333',
-            cursor: tool === 'none' ? 'default' : 'crosshair',
-            background: '#000',
-            margin: 'auto'
-          }}
-        />
+        <h2 style={{ fontSize: '16px', fontWeight: '600', color: '#333', margin: 0 }}>
+          Image Editor - {image.name}
+        </h2>
         
-        {/* Comment Input */}
-        <div style={{ marginTop: '20px' }}>
-          <label style={{ color: '#ccc', marginBottom: '5px', display: 'block' }}>Comment:</label>
-          <input
-            type="text"
-            style={{
-              width: '100%',
-              padding: '10px',
-              background: '#2b2b2b',
-              border: '1px solid #333',
-              borderRadius: '6px',
-              color: 'white'
-            }}
-            placeholder="Add a comment for this image"
-          />
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button 
+            className="btn btn-secondary" 
+            onClick={handleUndo} 
+            disabled={historyIndex <= 0}
+          >
+            Undo
+          </button>
+          <button 
+            className="btn btn-secondary" 
+            onClick={handleRedo} 
+            disabled={historyIndex >= history.length - 1}
+          >
+            Redo
+          </button>
+          <button className="btn btn-danger" onClick={handleResetToOriginal}>
+            Reset
+          </button>
+          <button className="btn btn-success" onClick={handleSave}>
+            Save
+          </button>
+          <button className="btn btn-secondary" onClick={onClose}>
+            Close
+          </button>
         </div>
       </div>
 
-      {/* Right Sidebar - Drawing Tools */}
-      <div style={{
-        width: '250px',
-        background: '#2b2b2b',
-        padding: '20px',
-        overflowY: 'auto',
-        borderLeft: '1px solid #333'
-      }}>
-        <h3 style={{ color: 'white', marginBottom: '20px' }}>Drawing Tools</h3>
-        
-        {/* Tool Buttons */}
-        <button
-          className={`btn ${tool === 'circle' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setTool('circle')}
-          style={{ width: '100%', marginBottom: '10px' }}
-        >
-          Circle
-        </button>
-        <button
-          className={`btn ${tool === 'arrow' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setTool('arrow')}
-          style={{ width: '100%', marginBottom: '10px' }}
-        >
-          Arrow
-        </button>
-        
-        {/* Color Picker */}
-        <div style={{ marginTop: '20px' }}>
-          <label style={{ color: '#ccc', display: 'block', marginBottom: '10px' }}>Color:</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '5px', marginBottom: '10px' }}>
-            {['#000000', '#ff0000', '#0000ff', '#ffffff'].map(c => (
-              <div
-                key={c}
-                onClick={() => setColor(c)}
-                style={{
-                  width: '45px',
-                  height: '45px',
-                  background: c,
-                  border: color === c ? '3px solid #1f6aa5' : '2px solid #555',
-                  cursor: 'pointer',
-                  borderRadius: '4px'
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        {/* Left Sidebar */}
+        <div style={{
+          width: '250px',
+          background: 'white',
+          borderRight: '1px solid #ddd',
+          overflowY: 'auto',
+          padding: '20px'
+        }}>
+          <h3 style={{ fontSize: '14px', fontWeight: '600', marginBottom: '16px' }}>
+            Tools
+          </h3>
+
+          <div style={{ display: 'grid', gap: '8px', marginBottom: '20px' }}>
+            <button
+              className={`btn ${tool === 'circle' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setTool('circle')}
+              style={{ width: '100%', justifyContent: 'flex-start' }}
+            >
+              Circle
+            </button>
+            <button
+              className={`btn ${tool === 'arrow' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setTool('arrow')}
+              style={{ width: '100%', justifyContent: 'flex-start' }}
+            >
+              Arrow
+            </button>
+            <button
+              className={`btn ${tool === 'crop' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setTool('crop')}
+              style={{ width: '100%', justifyContent: 'flex-start' }}
+            >
+              Crop
+            </button>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '500' }}>
+              Color
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+              {colors.map(c => (
+                <div
+                  key={c}
+                  onClick={() => setColor(c)}
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    background: c,
+                    border: color === c ? '3px solid #0066cc' : '1px solid #ddd',
+                    cursor: 'pointer',
+                    borderRadius: '4px'
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '500' }}>
+              Line Width: {lineWidth}px
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="15"
+              value={lineWidth}
+              onChange={(e) => setLineWidth(parseInt(e.target.value))}
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '500' }}>
+              Font Size: {fontSize}px
+            </label>
+            <input
+              type="range"
+              min="12"
+              max="72"
+              value={fontSize}
+              onChange={(e) => setFontSize(parseInt(e.target.value))}
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div style={{ padding: '16px', background: '#f5f5f5', borderRadius: '4px', border: '1px solid #ddd' }}>
+            <h4 style={{ fontSize: '13px', fontWeight: '600', marginBottom: '12px' }}>
+              Timestamp
+            </h4>
+            
+            <div style={{ display: 'grid', gap: '6px', marginBottom: '12px' }}>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setTimestampMode('auto')}
+                style={{ 
+                  width: '100%',
+                  background: timestampMode === 'auto' ? '#0066cc' : 'white',
+                  color: timestampMode === 'auto' ? 'white' : '#666'
                 }}
-              />
-            ))}
+              >
+                Auto
+              </button>
+              
+              <button
+                className="btn btn-secondary"
+                onClick={() => setTimestampMode('manual')}
+                style={{ 
+                  width: '100%',
+                  background: timestampMode === 'manual' ? '#0066cc' : 'white',
+                  color: timestampMode === 'manual' ? 'white' : '#666'
+                }}
+              >
+                Manual
+              </button>
+            </div>
+
+            {timestampMode === 'manual' && (
+              <div style={{ marginBottom: '12px' }}>
+                <input
+                  type="text"
+                  value={manualTimestamp}
+                  onChange={(e) => setManualTimestamp(e.target.value)}
+                  placeholder="e.g., 24-Dec-2024"
+                  style={{
+                    width: '100%',
+                    padding: '8px',
+                    border: '1px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '12px'
+                  }}
+                />
+              </div>
+            )}
+            
+            <button
+              className={`btn ${tool === 'timestamp' ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => setTool('timestamp')}
+              style={{ width: '100%' }}
+            >
+              Add
+            </button>
           </div>
         </div>
 
-        {/* Timestamp Options */}
-        <div style={{ marginTop: '20px', padding: '15px', background: '#1f1f1f', borderRadius: '8px' }}>
-          <h4 style={{ color: '#ccc', marginBottom: '10px' }}>Timestamp Options</h4>
-          
-          <button
-            className="btn btn-secondary"
-            onClick={() => setTimestampMode('auto')}
-            style={{ 
-              width: '100%', 
-              marginBottom: '5px', 
-              background: timestampMode === 'auto' ? '#1f6aa5' : '#404040' 
+        {/* Canvas Area */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '40px',
+          overflow: 'auto',
+          background: '#2a2a2a'
+        }}>
+          <canvas
+            ref={canvasRef}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            style={{
+              maxWidth: '100%',
+              maxHeight: '100%',
+              border: '2px solid #555',
+              cursor: tool === 'none' ? 'default' : 'crosshair',
+              borderRadius: '4px'
             }}
-          >
-            Auto Timestamp
-          </button>
-          
-          <button
-            className="btn btn-secondary"
-            onClick={() => setTimestampMode('manual')}
-            style={{ 
-              width: '100%', 
-              marginBottom: '10px', 
-              background: timestampMode === 'manual' ? '#1f6aa5' : '#404040' 
-            }}
-          >
-            Manual Timestamp
-          </button>
-
-          {timestampMode === 'manual' && (
-            <div style={{ marginBottom: '10px' }}>
-              <input
-                type="text"
-                value={manualTimestamp}
-                onChange={(e) => setManualTimestamp(e.target.value)}
-                placeholder="e.g., 24-Dec-2024 10:30 AM"
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  background: '#2b2b2b',
-                  border: '1px solid #555',
-                  borderRadius: '4px',
-                  color: 'white',
-                  fontSize: '12px'
-                }}
-              />
-              <small style={{ color: '#888', fontSize: '10px', display: 'block', marginTop: '5px' }}>
-                Enter custom date/time text
-              </small>
-            </div>
-          )}
-          
-          <button
-            className={`btn ${tool === 'timestamp' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setTool('timestamp')}
-            style={{ width: '100%' }}
-          >
-            Add Timestamp
-          </button>
-
-          {timestampMode === 'auto' && image.exifDate && (
-            <small style={{ color: '#888', fontSize: '10px', display: 'block', marginTop: '5px' }}>
-              EXIF: {image.exifDate}
-            </small>
-          )}
-        </div>
-
-        {/* Line Thickness */}
-        <div style={{ marginTop: '20px' }}>
-          <label style={{ color: '#ccc', display: 'block', marginBottom: '5px' }}>Line Thickness</label>
-          <input
-            type="range"
-            min="1"
-            max="10"
-            value={lineWidth}
-            onChange={(e) => setLineWidth(parseInt(e.target.value))}
-            style={{ width: '100%' }}
           />
-          <span style={{ color: '#ccc' }}>{lineWidth}px</span>
-        </div>
-
-        {/* Font Size */}
-        <div style={{ marginTop: '20px' }}>
-          <label style={{ color: '#ccc', display: 'block', marginBottom: '5px' }}>Font Size</label>
-          <input
-            type="range"
-            min="12"
-            max="48"
-            value={fontSize}
-            onChange={(e) => setFontSize(parseInt(e.target.value))}
-            style={{ width: '100%' }}
-          />
-          <span style={{ color: '#ccc' }}>{fontSize}px</span>
-        </div>
-
-        {/* Crop Tool */}
-        <button
-          className={`btn ${tool === 'crop' ? 'btn-primary' : 'btn-secondary'}`}
-          onClick={() => setTool('crop')}
-          style={{ width: '100%', marginTop: '20px' }}
-        >
-          Crop
-        </button>
-
-        {/* Action Buttons */}
-        <div style={{ marginTop: '30px' }}>
-          <button className="btn btn-secondary" onClick={handleUndo} disabled={historyIndex <= 0} style={{ width: '100%', marginBottom: '5px' }}>
-            Undo
-          </button>
-          <button className="btn btn-secondary" onClick={handleRedo} disabled={historyIndex >= history.length - 1} style={{ width: '100%', marginBottom: '5px' }}>
-            Redo
-          </button>
-          <button className="btn btn-secondary" onClick={handleClearAll} style={{ width: '100%', marginBottom: '5px' }}>
-            Clear All
-          </button>
-        </div>
-
-        {/* Save / Reset / Cancel */}
-        <div style={{ marginTop: '30px' }}>
-          <button className="btn btn-primary" onClick={handleSave} style={{ width: '100%', marginBottom: '5px' }}>
-            Save
-          </button>
-          <button className="btn btn-danger" onClick={handleResetToOriginal} style={{ width: '100%', marginBottom: '5px' }}>
-            Reset to Original
-          </button>
-          <button className="btn btn-secondary" onClick={onClose} style={{ width: '100%' }}>
-            Cancel
-          </button>
         </div>
       </div>
     </div>

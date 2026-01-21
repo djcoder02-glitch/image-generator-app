@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 
 interface PhotosConfigDialogProps {
   currentConfig: {
@@ -22,13 +22,13 @@ const PhotosConfigDialog: React.FC<PhotosConfigDialogProps> = ({ currentConfig, 
   const [config, setConfig] = useState(currentConfig);
 
   const layouts = [
-    { value: '1x1', icon: '1', label: '1 Photo' },
-    { value: '2x2', icon: '4', label: '4 Photos' },
-    { value: '3x3', icon: '9', label: '9 Photos' },
-    { value: '4x4', icon: '12', label: '12 Photos' },
-    { value: '2x3', icon: '6', label: '6 Photos (V)' },
-    { value: '3x2', icon: '6', label: '6 Photos (H)' },
-    { value: '2x4', icon: '8', label: '8 Photos' }
+    { value: '1x1', label: '1x1' },
+    { value: '2x2', label: '2x2' },
+    { value: '3x3', label: '3x3' },
+    { value: '4x4', label: '4x4' },
+    { value: '2x3', label: '2x3' },
+    { value: '3x2', label: '3x2' },
+    { value: '2x4', label: '2x4' }
   ];
 
   const handleSave = () => {
@@ -43,59 +43,73 @@ const PhotosConfigDialog: React.FC<PhotosConfigDialogProps> = ({ currentConfig, 
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(0, 0, 0, 0.8)',
+      background: 'rgba(0, 0, 0, 0.5)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 2000
     }}>
       <div style={{
-        background: '#2b2b2b',
-        borderRadius: '12px',
-        padding: '30px',
+        background: 'white',
+        borderRadius: '4px',
+        padding: '24px',
         width: '600px',
         maxHeight: '90vh',
         overflow: 'auto',
-        border: '1px solid #444'
+        border: '1px solid #ddd'
       }}>
-        <h2 style={{ color: 'white', marginBottom: '25px', textAlign: 'center' }}>Configure Photos Layout</h2>
+        <h2 style={{ 
+          fontSize: '18px',
+          fontWeight: '600',
+          color: '#333',
+          marginBottom: '20px'
+        }}>
+          Layout Configuration
+        </h2>
 
         {/* Layout Selection */}
-        <div style={{ marginBottom: '25px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '10px' }}>
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{
+            display: 'block',
+            marginBottom: '10px',
+            fontSize: '13px',
+            fontWeight: '500',
+            color: '#555'
+          }}>
+            Layout Type
+          </label>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(4, 1fr)', 
+            gap: '10px' 
+          }}>
             {layouts.map(layout => (
               <button
                 key={layout.value}
                 onClick={() => setConfig({ ...config, layoutType: layout.value })}
                 style={{
-                  padding: '15px 10px',
-                  background: config.layoutType === layout.value ? '#1f6aa5' : '#404040',
-                  border: config.layoutType === layout.value ? '2px solid #1f6aa5' : '2px solid #555',
-                  borderRadius: '8px',
-                  color: 'white',
+                  padding: '12px',
+                  background: config.layoutType === layout.value ? '#0066cc' : 'white',
+                  border: config.layoutType === layout.value ? '1px solid #0066cc' : '1px solid #ddd',
+                  borderRadius: '4px',
+                  color: config.layoutType === layout.value ? 'white' : '#333',
                   cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '5px'
+                  fontSize: '14px',
+                  fontWeight: '500'
                 }}
               >
-                {layout.value === '1x1' && '📄'}
-                {layout.value === '2x3' && '📱'}
-                {layout.icon !== '1' && layout.icon}
+                {layout.label}
               </button>
             ))}
           </div>
         </div>
 
         {/* Two Column Layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
           {/* Left Column */}
           <div>
             <div className="input-group">
-              <label>Photo Start No.</label>
+              <label>Photo Start Number</label>
               <input
                 type="number"
                 value={config.startPhotoNumber}
@@ -116,53 +130,21 @@ const PhotosConfigDialog: React.FC<PhotosConfigDialogProps> = ({ currentConfig, 
               </select>
             </div>
 
-            <div className="input-group">
-              <label>PDF Type</label>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
-                  <input
-                    type="radio"
-                    checked={config.pdfType === 'single'}
-                    onChange={() => setConfig({ ...config, pdfType: 'single' })}
-                  />
-                  Single PDF
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' }}>
-                  <input
-                    type="radio"
-                    checked={config.pdfType === 'multiple'}
-                    onChange={() => setConfig({ ...config, pdfType: 'multiple' })}
-                  />
-                  Multiple PDF
-                </label>
-              </div>
-            </div>
-
             <div className="checkbox-group">
               <input
                 type="checkbox"
-                id="addDate"
+                id="addTimestamp"
                 checked={config.addTimestamp}
                 onChange={(e) => setConfig({ ...config, addTimestamp: e.target.checked })}
               />
-              <label htmlFor="addDate">Add Date</label>
-            </div>
-
-            <div className="checkbox-group">
-              <input
-                type="checkbox"
-                id="addTime"
-                checked={config.addTimestamp}
-                onChange={(e) => setConfig({ ...config, addTimestamp: e.target.checked })}
-              />
-              <label htmlFor="addTime">Add Time</label>
+              <label htmlFor="addTimestamp">Add Date & Time</label>
             </div>
           </div>
 
           {/* Right Column */}
           <div>
             <div className="input-group">
-              <label>Sheet Start No.</label>
+              <label>Sheet Start Number</label>
               <input
                 type="number"
                 value={config.startSheetNumber}
@@ -181,17 +163,6 @@ const PhotosConfigDialog: React.FC<PhotosConfigDialogProps> = ({ currentConfig, 
               <label htmlFor="autoRotate">Auto Rotate</label>
             </div>
 
-            <div className="input-group">
-              <label>PDF max size (MB)</label>
-              <input
-                type="number"
-                value={config.pdfMaxSize}
-                onChange={(e) => setConfig({ ...config, pdfMaxSize: parseInt(e.target.value) || 4 })}
-                min={1}
-                max={50}
-              />
-            </div>
-
             <div className="checkbox-group">
               <input
                 type="checkbox"
@@ -204,8 +175,87 @@ const PhotosConfigDialog: React.FC<PhotosConfigDialogProps> = ({ currentConfig, 
           </div>
         </div>
 
+        {/* PDF Options */}
+        <div style={{
+          padding: '16px',
+          background: '#f5f5f5',
+          borderRadius: '4px',
+          marginBottom: '20px',
+          border: '1px solid #ddd'
+        }}>
+          <h4 style={{
+            fontSize: '13px',
+            fontWeight: '600',
+            color: '#333',
+            marginBottom: '12px'
+          }}>
+            PDF Options
+          </h4>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="input-group" style={{ marginBottom: 0 }}>
+              <label>PDF Type</label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <label style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px', 
+                  cursor: 'pointer',
+                  flex: 1,
+                  justifyContent: 'center',
+                  padding: '6px',
+                  background: config.pdfType === 'single' ? '#0066cc' : 'white',
+                  color: config.pdfType === 'single' ? 'white' : '#666',
+                  borderRadius: '4px',
+                  border: '1px solid ' + (config.pdfType === 'single' ? '#0066cc' : '#ddd')
+                }}>
+                  <input
+                    type="radio"
+                    checked={config.pdfType === 'single'}
+                    onChange={() => setConfig({ ...config, pdfType: 'single' })}
+                    style={{ display: 'none' }}
+                  />
+                  Single
+                </label>
+                <label style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px', 
+                  cursor: 'pointer',
+                  flex: 1,
+                  justifyContent: 'center',
+                  padding: '6px',
+                  background: config.pdfType === 'multiple' ? '#0066cc' : 'white',
+                  color: config.pdfType === 'multiple' ? 'white' : '#666',
+                  borderRadius: '4px',
+                  border: '1px solid ' + (config.pdfType === 'multiple' ? '#0066cc' : '#ddd')
+                }}>
+                  <input
+                    type="radio"
+                    checked={config.pdfType === 'multiple'}
+                    onChange={() => setConfig({ ...config, pdfType: 'multiple' })}
+                    style={{ display: 'none' }}
+                  />
+                  Multiple
+                </label>
+              </div>
+            </div>
+
+            <div className="input-group" style={{ marginBottom: 0 }}>
+              <label>Max Size (MB)</label>
+              <input
+                type="number"
+                value={config.pdfMaxSize}
+                onChange={(e) => setConfig({ ...config, pdfMaxSize: parseInt(e.target.value) || 4 })}
+                min={1}
+                max={50}
+              />
+            </div>
+          </div>
+        </div>
+
         {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: '10px', marginTop: '25px', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
           <button
             className="btn btn-secondary"
             onClick={() => setConfig({
@@ -213,23 +263,20 @@ const PhotosConfigDialog: React.FC<PhotosConfigDialogProps> = ({ currentConfig, 
               startPhotoNumber: 1,
               startSheetNumber: 1
             })}
-            style={{ padding: '10px 20px' }}
           >
             Reset Numbers
           </button>
           <button
-            className="btn btn-primary"
-            onClick={handleSave}
-            style={{ padding: '10px 30px' }}
-          >
-            Save
-          </button>
-          <button
             className="btn btn-secondary"
             onClick={onClose}
-            style={{ padding: '10px 20px' }}
           >
             Cancel
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={handleSave}
+          >
+            Save
           </button>
         </div>
       </div>

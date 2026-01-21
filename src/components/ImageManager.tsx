@@ -1,4 +1,4 @@
-﻿import { useState, forwardRef, useImperativeHandle } from 'react';
+import { useState, forwardRef, useImperativeHandle } from 'react';
 import ImageEditor from './ImageEditor';
 
 interface ImageData {
@@ -82,7 +82,9 @@ const ImageManager = forwardRef((_props, ref) => {
   };
 
   const handleRemoveImage = (imageId: string) => {
-    setImages(prev => prev.filter(img => img.id !== imageId));
+    if (window.confirm('Remove this image?')) {
+      setImages(prev => prev.filter(img => img.id !== imageId));
+    }
   };
 
   const handleMoveUp = (index: number) => {
@@ -123,8 +125,7 @@ const ImageManager = forwardRef((_props, ref) => {
   };
 
   const handleResetImage = (imageId: string) => {
-    const confirmed = window.confirm('Are you sure you want to reset this image to original? All edits will be lost.');
-    if (confirmed) {
+    if (window.confirm('Reset this image to original?')) {
       setImages(prev => prev.map(img =>
         img.id === imageId
           ? { 
@@ -140,141 +141,113 @@ const ImageManager = forwardRef((_props, ref) => {
 
   return (
     <div className="card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-        <h3 style={{ fontSize: '18px' }}>Images ({images.length})</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <h3 style={{ marginBottom: 0 }}>Images ({images.length})</h3>
         <button className="btn btn-primary" onClick={handleAddImages}>
-          ➕ Add Images
+          Add Images
         </button>
       </div>
 
       {images.length === 0 ? (
-        <div style={{ 
-          textAlign: 'center', 
-          padding: '40px', 
-          color: '#666',
-          border: '2px dashed #333',
-          borderRadius: '8px'
-        }}>
-          <p>No images added yet. Click "Add Images" to get started.</p>
+        <div className="empty-state">
+          <div className="empty-state-title">No images added</div>
+          <div className="empty-state-text">Click "Add Images" to get started</div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxHeight: '500px', overflow: 'auto' }}>
+        <div className="image-grid">
           {images.map((image, index) => (
-            <div 
-              key={image.id}
-              className="card"
-              style={{ 
-                display: 'flex', 
-                gap: '15px',
-                padding: '15px',
-                background: '#1f1f1f'
-              }}
-            >
-              <div style={{ 
-                width: '150px', 
-                height: '100px',
-                flexShrink: 0,
-                border: '2px solid #333',
-                borderRadius: '6px',
-                overflow: 'hidden',
-                background: '#000',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
+            <div key={image.id} className="image-card">
+              <div className="image-card-thumbnail">
                 <img
                   src={image.thumbnail}
                   alt={image.name}
                   style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
                     transform: `rotate(${image.rotation}deg)`,
-                    objectFit: 'contain'
                   }}
                 />
+                <div className="image-card-badge">#{index + 1}</div>
+                {image.editedBuffer && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '6px',
+                    left: '6px',
+                    background: '#28a745',
+                    color: 'white',
+                    padding: '2px 8px',
+                    borderRadius: '3px',
+                    fontSize: '11px',
+                    fontWeight: '600'
+                  }}>
+                    Edited
+                  </div>
+                )}
               </div>
 
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <strong>{index + 1}. {image.name}</strong>
-                  {image.editedBuffer && (
-                    <span style={{ 
-                      color: '#1f6aa5', 
-                      fontSize: '12px',
-                      background: '#1f1f1f',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      border: '1px solid #1f6aa5'
-                    }}>
-                      ✏️ Edited
-                    </span>
-                  )}
-                  {image.exifDate && (
-                    <span style={{ 
-                      color: '#888', 
-                      fontSize: '11px'
-                    }}>
-                      📅 {image.exifDate}
-                    </span>
-                  )}
+              <div className="image-card-content">
+                <div style={{ 
+                  fontSize: '13px', 
+                  fontWeight: '500', 
+                  color: '#333',
+                  marginBottom: '8px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {image.name}
                 </div>
                 
-                <div className="input-group" style={{ marginBottom: 0 }}>
+                <div className="input-group" style={{ marginBottom: '10px' }}>
                   <input
                     type="text"
                     value={image.comment}
                     onChange={(e) => handleCommentChange(image.id, e.target.value)}
-                    placeholder="Add a comment for this image"
-                    style={{ fontSize: '12px', padding: '6px' }}
+                    placeholder="Comment"
+                    style={{ fontSize: '12px', padding: '6px 8px' }}
                   />
                 </div>
 
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <div className="image-card-actions">
                   <button 
                     className="btn btn-secondary"
-                    style={{ padding: '6px 12px', fontSize: '11px' }}
-                    onClick={() => handleRotateImage(image.id)}
-                  >
-                    🔄 Rotate
-                  </button>
-                  <button 
-                    className="btn btn-primary"
-                    style={{ padding: '6px 12px', fontSize: '11px' }}
                     onClick={() => handleEditImage(image)}
                   >
-                    ✏️ Edit
+                    Edit
+                  </button>
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={() => handleRotateImage(image.id)}
+                  >
+                    ↻
+                  </button>
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={() => handleMoveUp(index)}
+                    disabled={index === 0}
+                  >
+                    ↑
+                  </button>
+                  <button 
+                    className="btn btn-secondary"
+                    onClick={() => handleMoveDown(index)}
+                    disabled={index === images.length - 1}
+                  >
+                    ↓
                   </button>
                   {(image.editedBuffer || image.rotation !== 0) && (
                     <button 
                       className="btn btn-secondary"
-                      style={{ padding: '6px 12px', fontSize: '11px' }}
                       onClick={() => handleResetImage(image.id)}
+                      style={{ width: '100%' }}
                     >
-                      ↺ Reset
+                      Reset
                     </button>
                   )}
                   <button 
-                    className="btn btn-secondary"
-                    style={{ padding: '6px 12px', fontSize: '11px' }}
-                    onClick={() => handleMoveUp(index)}
-                    disabled={index === 0}
-                  >
-                    ↑ Up
-                  </button>
-                  <button 
-                    className="btn btn-secondary"
-                    style={{ padding: '6px 12px', fontSize: '11px' }}
-                    onClick={() => handleMoveDown(index)}
-                    disabled={index === images.length - 1}
-                  >
-                    ↓ Down
-                  </button>
-                  <button 
                     className="btn btn-danger"
-                    style={{ padding: '6px 12px', fontSize: '11px' }}
                     onClick={() => handleRemoveImage(image.id)}
+                    style={{ width: '100%' }}
                   >
-                    🗑️ Remove
+                    Remove
                   </button>
                 </div>
               </div>

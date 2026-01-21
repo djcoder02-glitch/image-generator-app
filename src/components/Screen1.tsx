@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import ImageManager from './ImageManager';
 import PhotosConfigDialog from './PhotosConfigDialog';
-import LayoutPreview from './LayoutPreview';
 
 interface Screen1Props {
   onBack: () => void;
@@ -43,7 +42,8 @@ const Screen1: React.FC<Screen1Props> = ({ onBack }) => {
     customTextOverlay: '',
     pdfType: 'single',
     pdfMaxSize: 4,
-    addLocation: false
+    addLocation: false,
+    addTimestamp: false
   });
 
   const imageManagerRef = useRef<any>(null);
@@ -96,14 +96,14 @@ const Screen1: React.FC<Screen1Props> = ({ onBack }) => {
       await (window as any).electronAPI.showMessage({
         type: 'info',
         title: 'Success',
-        message: `Photo sheet generated successfully in:\n${outputFolder}`
+        message: `Photo sheets generated successfully in:\n${outputFolder}`
       });
     } catch (error) {
       console.error('Generation error:', error);
       await (window as any).electronAPI.showMessage({
         type: 'error',
         title: 'Error',
-        message: 'Failed to generate photo sheet. Check console for details.'
+        message: 'Failed to generate photo sheets.'
       });
     } finally {
       setIsGenerating(false);
@@ -113,124 +113,266 @@ const Screen1: React.FC<Screen1Props> = ({ onBack }) => {
   const images = imageManagerRef.current?.getImages() || [];
 
   return (
-    <div className="screen">
-      <div className="screen-header">
-        <h2 style={{ fontSize: '24px', fontWeight: 'bold' }}>
-          Photo Sheet Generator
-        </h2>
-        <button className="btn btn-secondary" onClick={onBack}>
-          Back to Main
-        </button>
-      </div>
-
-      <div className="tabs">
-        <button
-          className={`tab ${activeTab === 'Motor' ? 'active' : ''}`}
-          onClick={() => setActiveTab('Motor')}
-        >
-          Motor
-        </button>
-        <button
-          className={`tab ${activeTab === 'Non-Motor' ? 'active' : ''}`}
-          onClick={() => setActiveTab('Non-Motor')}
-        >
-          Non-Motor
-        </button>
-      </div>
-
-      <div className="scrollable">
-        {/* Survey Details */}
-        <div className="card" style={{ marginBottom: '20px' }}>
-          <h3 style={{ marginBottom: '15px', fontSize: '18px' }}>Survey Details</h3>
-          
-          <div className="grid grid-2">
-            <div className="input-group">
-              <label>Insured Name</label>
-              <input 
-                type="text" 
-                value={formData.insuredName}
-                onChange={(e) => handleInputChange('insuredName', e.target.value)}
-              />
+    <div style={{
+      width: '100vw',
+      height: '100vh',
+      background: '#f0f2f5',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
+      {/* Top Navigation */}
+      <div style={{
+        height: '64px',
+        background: 'white',
+        borderBottom: '1px solid #e5e7eb',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 32px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            background: '#3b4f6b',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px'
+          }}>
+            📄
+          </div>
+          <div>
+            <div style={{
+              fontSize: '16px',
+              fontWeight: '600',
+              color: '#1f2937'
+            }}>
+              Photo Sheet Generator
             </div>
-            
-            {activeTab === 'Motor' && (
-              <>
-                <div className="input-group">
-                  <label>Vehicle No</label>
-                  <input 
-                    type="text"
-                    value={formData.vehicleNo}
-                    onChange={(e) => handleInputChange('vehicleNo', e.target.value)}
-                  />
-                </div>
-                <div className="input-group">
-                  <label>Accident Date</label>
-                  <input 
-                    type="text"
-                    value={formData.accidentDate}
-                    onChange={(e) => handleInputChange('accidentDate', e.target.value)}
-                  />
-                </div>
-              </>
-            )}
-
-            <div className="input-group">
-              <label>Policy No</label>
-              <input 
-                type="text"
-                value={formData.policyNo}
-                onChange={(e) => handleInputChange('policyNo', e.target.value)}
-              />
-            </div>
-            <div className="input-group">
-              <label>Ref No</label>
-              <input 
-                type="text"
-                value={formData.refNo}
-                onChange={(e) => handleInputChange('refNo', e.target.value)}
-              />
-            </div>
-            <div className="input-group">
-              <label>Insurance Company</label>
-              <input 
-                type="text"
-                value={formData.insuranceCompany}
-                onChange={(e) => handleInputChange('insuranceCompany', e.target.value)}
-              />
-            </div>
-            <div className="input-group">
-              <label>Location</label>
-              <input 
-                type="text"
-                value={formData.location}
-                onChange={(e) => handleInputChange('location', e.target.value)}
-              />
-            </div>
-            <div className="input-group">
-              <label>Remarks</label>
-              <textarea 
-                rows={3}
-                value={formData.remarks}
-                onChange={(e) => handleInputChange('remarks', e.target.value)}
-              />
+            <div style={{
+              fontSize: '12px',
+              color: '#9ca3af'
+            }}>
+              Create Survey Documentation
             </div>
           </div>
         </div>
 
-        {/* Layout Configuration with Button */}
-        <div className="card" style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <h3 style={{ fontSize: '18px' }}>Layout Configuration</h3>
-            <button 
-              className="btn btn-primary"
-              onClick={() => setShowConfigDialog(true)}
-            >
-              ?? Configure Layout
-            </button>
+        <button
+          className="btn btn-secondary"
+          onClick={onBack}
+          style={{ fontSize: '14px', padding: '8px 24px' }}
+        >
+          Back
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div style={{
+        background: 'white',
+        borderBottom: '1px solid #e5e7eb',
+        padding: '0 32px',
+        display: 'flex',
+        gap: '4px'
+      }}>
+        <button
+          onClick={() => setActiveTab('Motor')}
+          style={{
+            padding: '12px 24px',
+            background: activeTab === 'Motor' ? '#3b4f6b' : 'transparent',
+            color: activeTab === 'Motor' ? 'white' : '#6b7280',
+            border: 'none',
+            borderRadius: '8px 8px 0 0',
+            fontSize: '14px',
+            fontWeight: '500',
+            cursor: 'pointer'
+          }}
+        >
+          Motor Survey
+        </button>
+        <button
+          onClick={() => setActiveTab('Non-Motor')}
+          style={{
+            padding: '12px 24px',
+            background: activeTab === 'Non-Motor' ? '#3b4f6b' : 'transparent',
+            color: activeTab === 'Non-Motor' ? 'white' : '#6b7280',
+            border: 'none',
+            borderRadius: '8px 8px 0 0',
+            fontSize: '14px',
+            fontWeight: '500',
+            cursor: 'pointer'
+          }}
+        >
+          Non-Motor Survey
+        </button>
+      </div>
+
+      {/* Main Content Area */}
+      <div style={{
+        flex: 1,
+        overflow: 'auto',
+        padding: '24px 32px'
+      }}>
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto'
+        }}>
+          {/* Policy Details Card */}
+          <div style={{
+            background: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            marginBottom: '24px',
+            overflow: 'hidden'
+          }}>
+            {/* Card Header */}
+            <div style={{
+              background: '#3b4f6b',
+              padding: '16px 24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span style={{ fontSize: '18px' }}>📋</span>
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: '600',
+                color: 'white',
+                margin: 0
+              }}>
+                Policy Details
+              </h3>
+            </div>
+
+            {/* Card Content */}
+            <div style={{ padding: '24px' }}>
+              <div className="grid grid-2">
+                <div className="input-group">
+                  <label>Insured Name</label>
+                  <input 
+                    type="text" 
+                    value={formData.insuredName}
+                    onChange={(e) => handleInputChange('insuredName', e.target.value)}
+                    placeholder="Enter insured name"
+                  />
+                </div>
+                
+                {activeTab === 'Motor' && (
+                  <>
+                    <div className="input-group">
+                      <label>Vehicle Number</label>
+                      <input 
+                        type="text"
+                        value={formData.vehicleNo}
+                        onChange={(e) => handleInputChange('vehicleNo', e.target.value)}
+                        placeholder="Enter vehicle number"
+                      />
+                    </div>
+                    <div className="input-group">
+                      <label>Accident Date</label>
+                      <input 
+                        type="text"
+                        value={formData.accidentDate}
+                        onChange={(e) => handleInputChange('accidentDate', e.target.value)}
+                        placeholder="DD-MM-YYYY"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="input-group">
+                  <label>Policy Number</label>
+                  <input 
+                    type="text"
+                    value={formData.policyNo}
+                    onChange={(e) => handleInputChange('policyNo', e.target.value)}
+                    placeholder="Enter policy number"
+                  />
+                </div>
+                <div className="input-group">
+                  <label>Reference Number</label>
+                  <input 
+                    type="text"
+                    value={formData.refNo}
+                    onChange={(e) => handleInputChange('refNo', e.target.value)}
+                    placeholder="Enter reference number"
+                  />
+                </div>
+                <div className="input-group">
+                  <label>Insurance Company</label>
+                  <input 
+                    type="text"
+                    value={formData.insuranceCompany}
+                    onChange={(e) => handleInputChange('insuranceCompany', e.target.value)}
+                    placeholder="Enter company name"
+                  />
+                </div>
+                <div className="input-group">
+                  <label>Location</label>
+                  <input 
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => handleInputChange('location', e.target.value)}
+                    placeholder="Enter location"
+                  />
+                </div>
+                <div className="input-group" style={{ gridColumn: '1 / -1' }}>
+                  <label>Remarks</label>
+                  <textarea 
+                    rows={3}
+                    value={formData.remarks}
+                    onChange={(e) => handleInputChange('remarks', e.target.value)}
+                    placeholder="Add any remarks or notes"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-            <div style={{ flex: 1 }}>
+          {/* Layout Settings Card */}
+          <div style={{
+            background: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            marginBottom: '24px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              background: '#3b4f6b',
+              padding: '16px 24px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '18px' }}>⚙️</span>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: 'white',
+                  margin: 0
+                }}>
+                  Layout Settings
+                </h3>
+              </div>
+              <button 
+                className="btn"
+                onClick={() => setShowConfigDialog(true)}
+                style={{
+                  background: 'white',
+                  color: '#3b4f6b',
+                  fontSize: '13px',
+                  padding: '6px 16px',
+                  fontWeight: '600'
+                }}
+              >
+                Advanced Config
+              </button>
+            </div>
+
+            <div style={{ padding: '24px' }}>
               <div className="grid grid-3">
                 <div className="input-group">
                   <label>Survey Type</label>
@@ -243,193 +385,131 @@ const Screen1: React.FC<Screen1Props> = ({ onBack }) => {
 
                 <div className="input-group">
                   <label>Layout Type</label>
-                  <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-                    <select value={formData.layoutType} onChange={(e) => handleInputChange('layoutType', e.target.value)} style={{ flex: 1 }}>
-                      <option value="1x1">1x1</option>
-                      <option value="2x2">2x2</option>
-                      <option value="3x3">3x3</option>
-                      <option value="4x4">4x4</option>
-                      <option value="2x3">2x3 (6 Photos V)</option>
-                      <option value="3x2">3x2 (6 Photos H)</option>
-                    </select>
-                    <span style={{ color: '#1f6aa5', fontSize: '12px', whiteSpace: 'nowrap' }}>
-                      {formData.layoutType.split('x').reduce((a, b) => (typeof a === 'string' ? parseInt(a) : a) * parseInt(b), 1 as number)} Photos
-                    </span>
-                  </div>
+                  <select value={formData.layoutType} onChange={(e) => handleInputChange('layoutType', e.target.value)}>
+                    <option value="1x1">1x1 (1 photo)</option>
+                    <option value="2x2">2x2 (4 photos)</option>
+                    <option value="3x3">3x3 (9 photos)</option>
+                    <option value="4x4">4x4 (16 photos)</option>
+                    <option value="2x3">2x3 (6 photos)</option>
+                    <option value="3x2">3x2 (6 photos)</option>
+                    <option value="2x4">2x4 (8 photos)</option>
+                  </select>
                 </div>
 
                 <div className="input-group">
                   <label>Output Format</label>
-                  <select 
-                    value={formData.outputFormat} 
-                    onChange={(e) => handleInputChange('outputFormat', e.target.value)}
-                    style={{ 
-                      background: formData.outputFormat === 'PDF' ? '#1f6aa5' : '#2b2b2b',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    <option>JPG</option>
-                    <option>PDF</option>
+                  <select value={formData.outputFormat} onChange={(e) => handleInputChange('outputFormat', e.target.value)}>
+                    <option value="JPG">JPG</option>
+                    <option value="PDF">PDF</option>
                   </select>
                 </div>
               </div>
             </div>
-
-            {/* Layout Preview */}
-            <LayoutPreview
-              images={images}
-              layoutType={formData.layoutType}
-              onRemove={() => {}}
-              onEdit={() => {}}
-              onRotate={() => {}}
-            />
           </div>
+
+          {/* Output Settings Card */}
+          <div style={{
+            background: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            marginBottom: '24px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              background: '#3b4f6b',
+              padding: '16px 24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span style={{ fontSize: '18px' }}>💾</span>
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: '600',
+                color: 'white',
+                margin: 0
+              }}>
+                Output Settings
+              </h3>
+            </div>
+
+            <div style={{ padding: '24px' }}>
+              <div className="grid grid-2">
+                <div className="input-group">
+                  <label>Output Folder</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="text"
+                      value={outputFolder}
+                      readOnly
+                      placeholder="Select folder"
+                      style={{ flex: 1 }}
+                    />
+                    <button 
+                      className="btn btn-secondary"
+                      onClick={handleSelectOutputFolder}
+                    >
+                      Browse
+                    </button>
+                  </div>
+                </div>
+
+                <div className="input-group">
+                  <label>Image Quality</label>
+                  <select value={formData.imageQuality} onChange={(e) => handleInputChange('imageQuality', e.target.value)}>
+                    <option>Small : 1350 x 960</option>
+                    <option>Medium : 1800 x 1280</option>
+                    <option>Large : 2400 x 1700</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Image Manager */}
+          <ImageManager ref={imageManagerRef} />
         </div>
+      </div>
 
-        {/* Display Settings */}
-        <div className="card" style={{ marginBottom: '20px' }}>
-          <h3 style={{ marginBottom: '15px', fontSize: '18px' }}>Display Settings</h3>
-          
-          <div className="grid grid-3">
-            <div className="input-group">
-              <label>Image Quality</label>
-              <select value={formData.imageQuality} onChange={(e) => handleInputChange('imageQuality', e.target.value)}>
-                <option>Small : 1350 x 960</option>
-                <option>Medium : 1920 x 1080</option>
-                <option>Large : 2560 x 1440</option>
-              </select>
-            </div>
-
-            <div className="input-group">
-              <label>Text Alignment</label>
-              <select value={formData.alignment} onChange={(e) => handleInputChange('alignment', e.target.value)}>
-                <option value="left">Left</option>
-                <option value="center">Center</option>
-                <option value="right">Right</option>
-              </select>
-            </div>
-
-            <div className="input-group">
-              <label>Font Size</label>
-              <input 
-                type="number" 
-                value={formData.fontSize}
-                onChange={(e) => handleInputChange('fontSize', parseInt(e.target.value))}
-                min={10} 
-                max={50} 
-              />
-            </div>
-
-            <div className="input-group">
-              <label>Font Family</label>
-              <select value={formData.fontFamily} onChange={(e) => handleInputChange('fontFamily', e.target.value)}>
-                <option>Arial</option>
-                <option>Times New Roman</option>
-                <option>Courier New</option>
-                <option>Georgia</option>
-                <option>Verdana</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Output Settings */}
-        <div className="card" style={{ marginBottom: '20px' }}>
-          <h3 style={{ marginBottom: '15px', fontSize: '18px' }}>Output Settings</h3>
-          
-          <div className="checkbox-group" style={{ marginBottom: '15px' }}>
-            <input
-              type="checkbox"
-              id="useDefaultFilename"
-              checked={formData.useDefaultFilename}
-              onChange={(e) => handleInputChange('useDefaultFilename', e.target.checked)}
-            />
-            <label htmlFor="useDefaultFilename">Use default filename</label>
-          </div>
-
-          {!formData.useDefaultFilename && (
-            <div className="input-group" style={{ marginBottom: '15px' }}>
-              <label>Custom Filename (without extension)</label>
-              <input
-                type="text"
-                value={formData.customFilename}
-                onChange={(e) => handleInputChange('customFilename', e.target.value)}
-                placeholder="e.g., Survey_Report"
-              />
-            </div>
-          )}
-
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <button className="btn btn-secondary" onClick={handleSelectOutputFolder}>
-              Select Output Folder
-            </button>
-            <span style={{ color: '#888', fontSize: '14px' }}>
-              {outputFolder || 'No folder selected'}
-            </span>
-          </div>
-        </div>
-
-        {/* Image Manager */}
-        <ImageManager ref={imageManagerRef} />
-
-        {/* Generate Button */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'center',
-          gap: '10px',
-          margin: '30px 0 50px 0',
-          alignItems: 'center'
+      {/* Bottom Action Bar */}
+      <div style={{
+        background: 'white',
+        borderTop: '1px solid #e5e7eb',
+        padding: '16px 32px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <div style={{
+          fontSize: '14px',
+          color: '#6b7280'
         }}>
-          {isGenerating ? (
-            <div className="loading-bar">
+          {images.length} images • {formData.layoutType} layout • {outputFolder ? '✓ Folder selected' : '⚠ Select folder'}
+        </div>
+
+        {!isGenerating ? (
+          <button 
+            className="btn btn-primary"
+            onClick={handleGenerate}
+            disabled={!outputFolder || images.length === 0}
+            style={{
+              padding: '12px 32px',
+              fontSize: '15px',
+              fontWeight: '600'
+            }}
+          >
+            Generate Photo Sheet
+          </button>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="loading-bar" style={{ width: '200px' }}>
               <div className="loading-bar-fill"></div>
             </div>
-          ) : (
-            <>
-              <button 
-                className="btn btn-secondary"
-                onClick={() => {
-                  setFormData({
-                    ...formData,
-                    insuredName: '',
-                    vehicleNo: '',
-                    accidentDate: '',
-                    policyNo: '',
-                    refNo: '',
-                    insuranceCompany: '',
-                    location: '',
-                    remarks: ''
-                  });
-                }}
-                style={{ padding: '12px 24px' }}
-              >
-                Reset
-              </button>
-              
-              <button 
-                className="btn btn-primary btn-large"
-                onClick={handleGenerate}
-              >
-                Generate Photo Sheet ({formData.outputFormat})
-              </button>
-
-              <button 
-                className="btn btn-secondary"
-                onClick={onBack}
-                style={{ padding: '12px 24px' }}
-              >
-                Close
-              </button>
-            </>
-          )}
-        </div>
+            <span style={{ fontSize: '14px', color: '#6b7280' }}>Generating...</span>
+          </div>
+        )}
       </div>
 
-      <div className="footer">
-        Copyright @ VantageSolutions.org : 9039061038
-      </div>
-
-      {/* Config Dialog */}
       {showConfigDialog && (
         <PhotosConfigDialog
           currentConfig={{
@@ -440,7 +520,7 @@ const Screen1: React.FC<Screen1Props> = ({ onBack }) => {
             photoRatio: formData.photoRatio,
             autoRotate: formData.autoRotate,
             outputFormat: formData.outputFormat,
-            addTimestamp: formData.addTimestampOverlay,
+            addTimestamp: formData.addTimestamp,
             addLocation: formData.addLocation,
             pdfType: formData.pdfType,
             pdfMaxSize: formData.pdfMaxSize
@@ -453,33 +533,27 @@ const Screen1: React.FC<Screen1Props> = ({ onBack }) => {
   );
 };
 
-// [Keep the same generatePhotoSheet function from before - unchanged]
+// Keep all generation functions from original
 async function generatePhotoSheet(options: any) {
   const { formData, images, outputFolder, sheetType } = options;
   
+  const qualityMap: { [key: string]: { width: number; height: number } } = {
+    'Small : 1350 x 960': { width: 1350, height: 960 },
+    'Medium : 1800 x 1280': { width: 1800, height: 1280 },
+    'Large : 2400 x 1700': { width: 2400, height: 1700 }
+  };
+  
+  const { width: sheetWidth, height: sheetHeight } = qualityMap[formData.imageQuality] || { width: 1800, height: 1280 };
+  
   const [rows, cols] = formData.layoutType.split('x').map(Number);
-  const imagesPerSheet = formData.maxPhotosPerSheet > 0 
-    ? Math.min(formData.maxPhotosPerSheet, rows * cols)
-    : rows * cols;
+  const photosPerSheet = rows * cols;
   
-  let sheetWidth = 1350;
-  let sheetHeight = 960;
+  let sheetNum = formData.startSheetNumber;
   
-  if (formData.imageQuality.includes('1920')) {
-    sheetWidth = 1920;
-    sheetHeight = 1080;
-  } else if (formData.imageQuality.includes('2560')) {
-    sheetWidth = 2560;
-    sheetHeight = 1440;
-  }
-  
-  const numSheets = Math.ceil(images.length / imagesPerSheet);
-  
-  for (let sheetNum = 0; sheetNum < numSheets; sheetNum++) {
-    const actualSheetNum = formData.startSheetNumber + sheetNum;
-    const startIdx = sheetNum * imagesPerSheet;
-    const endIdx = Math.min(startIdx + imagesPerSheet, images.length);
-    const sheetImages = images.slice(startIdx, endIdx);
+  for (let i = 0; i < images.length; i += photosPerSheet) {
+    const sheetImages = images.slice(i, i + photosPerSheet);
+    const startIdx = i;
+    const actualSheetNum = sheetNum++;
     
     await createSheet(
       actualSheetNum, 
@@ -601,8 +675,7 @@ async function createSheet(
     ? `Sheet_${sheetNum}.${formData.outputFormat.toLowerCase()}`
     : `${formData.customFilename}_${sheetNum}.${formData.outputFormat.toLowerCase()}`;
   
-  // Save directly to output folder using Electron API
-canvas.toBlob(async (blob) => {
+  canvas.toBlob(async (blob) => {
     if (!blob) return;
     
     const reader = new FileReader();
@@ -610,14 +683,12 @@ canvas.toBlob(async (blob) => {
       const base64Data = reader.result as string;
       const fullPath = `${outputFolder}/${filename}`;
       
-      // Check if file exists
       const exists = await (window as any).electronAPI.fileExists(fullPath);
       if (exists) {
         const overwrite = confirm(`File "${filename}" already exists. Overwrite?`);
         if (!overwrite) return;
       }
       
-      // Save file directly to disk
       const result = await (window as any).electronAPI.saveFile({
         filePath: fullPath,
         base64Data: base64Data,
@@ -732,5 +803,3 @@ async function drawImageWithOverlays(
 }
 
 export default Screen1;
-
-
